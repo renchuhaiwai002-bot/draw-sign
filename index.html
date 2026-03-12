@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>情侣缘分终极测试</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+body{font-family:'Arial',sans-serif;background:linear-gradient(160deg,#ffe0e6,#fff0f5);text-align:center;padding:20px;color:#333;margin:0;}
+section{display:none;max-width:440px;margin:auto;background:white;padding:25px;border-radius:20px;box-shadow:0 12px 28px rgba(0,0,0,0.15);transition:all 0.4s ease;}
+h1,h2{margin:12px 0;}
+h1{font-size:28px;color:#ff4d6d;}
+h2{font-size:22px;color:#ff2e70;}
+input,select{width:90%;padding:14px;margin:10px 0;font-size:16px;border-radius:12px;border:1px solid #ffccd6;transition:0.3s;}
+input:focus,select:focus{border-color:#ff4d6d;outline:none;}
+button{padding:16px 32px;font-size:18px;border:none;border-radius:14px;margin-top:20px;cursor:pointer;background:linear-gradient(90deg,#ff4d6d,#ff78a0);color:white;transition:0.3s;}
+button:hover{transform:scale(1.05);}
+.progress{width:100%;background:#ffd7e0;height:20px;border-radius:20px;margin-top:20px;overflow:hidden;}
+.bar{height:20px;background:#ff4d6d;width:0%;border-radius:20px;transition:width 1.5s ease;}
+#timer{font-size:16px;color:#ff4d6d;font-weight:bold;}
+#loadingText{font-size:18px;color:#ff2e70;min-height:24px;margin-top:20px;animation:fadeIn 0.8s ease infinite alternate;}
+@keyframes fadeIn{0%{opacity:0.3;}100%{opacity:1;}}
+canvas{margin-top:20px;background:white;border-radius:12px;padding:10px;}
+#scrollNotice{margin-top:15px;color:#ff4d6d;font-size:14px;height:20px;overflow:hidden;position:relative;animation:floatScroll 2s linear infinite;}
+@keyframes floatScroll{0%{top:0px;}50%{top:-2px;}100%{top:0px;}}
+#avatarContainer{display:flex;justify-content:center;margin-top:15px;gap:20px;}
+.avatar{width:100px;height:100px;border-radius:50%;border:2px solid #ff4d6d;object-fit:cover;}
+.timeline{margin-top:15px;text-align:left;font-size:14px;color:#ff2e70;}
+</style>
+</head>
+<body>
+
+<!-- 首页 -->
+<section id="page1" style="display:block">
+<h1>情侣缘分终极测试</h1>
+<p>根据生日分析你们的缘分指数</p>
+<p id="counter">已有 412,893 对情侣完成测试</p>
+<div id="scrollNotice"></div>
+<button onclick="checkDaily()">立即测试</button>
+</section>
+
+<!-- 输入页 -->
+<section id="page2">
+<h2>输入双方信息</h2>
+<input id="yourName" placeholder="你的名字">
+<select id="yourGender">
+  <option value="">请选择性别</option>
+  <option value="male">男</option>
+  <option value="female">女</option>
+</select>
+<input id="yourBirthday" type="date">
+<input id="partnerName" placeholder="对方名字(可选)">
+<select id="partnerGender">
+  <option value="">请选择性别</option>
+  <option value="male">男</option>
+  <option value="female">女</option>
+</select>
+<input id="partnerBirthday" type="date">
+<button onclick="startTest()">生成报告</button>
+</section>
+
+<!-- 加载页 -->
+<section id="page3">
+<h2>正在分析你们的缘分...</h2>
+<p id="loadingText">匹配生日能量...</p>
+</section>
+
+<!-- 结果页 -->
+<section id="page4">
+<h2>情侣匹配度</h2>
+<h1 id="score">0%</h1>
+<div class="progress"><div id="bar" class="bar"></div></div>
+<div id="avatarContainer">
+  <img id="avatar1" class="avatar" alt="你">
+  <img id="avatar2" class="avatar" alt="TA">
+</div>
+<canvas id="radarChart"></canvas>
+<p id="resultText"></p>
+<div class="timeline" id="timeline"></div>
+<button onclick="nextPage(5)">查看完整报告</button>
+</section>
+
+<!-- 完整报告页 -->
+<section id="page5">
+<h2>完整报告已生成</h2>
+<p>
+✓ 情侣真实匹配指数<br>
+✓ 性格匹配分析<br>
+✓ 最大矛盾点<br>
+✓ 感情未来发展
+</p>
+<p>报告仅限你可见，有效30分钟</p>
+<p id="timer">29:59</p>
+<button onclick="sendToMake()">领取完整报告</button>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+// 页面切换
+function nextPage(page){
+  document.querySelectorAll("section").forEach(s=>s.style.display="none");
+  document.getElementById("page"+page).style.display="block";
+}
+
+// 每日限制
+function checkDaily(){
+  const today=new Date().toISOString().slice(0,10);
+  if(localStorage.getItem('lastTestDate')===today){
+    alert("今天已测试，请明天再来");
+    return;
+  }
+  localStorage.setItem('lastTestDate', today);
+  nextPage(2);
+}
+
+// 匹配度算法
+function calculateScore(a,b){
+  if(!a||!b) return Math.floor(Math.random()*30)+60;
+  const d1=new Date(a), d2=new Date(b);
+  const n1=d1.getFullYear()+d1.getMonth()*2+d1.getDate()*3;
+  const n2=d2.getFullYear()+d2.getMonth()*2+d2.getDate()*3;
+  let diff=Math.abs(n1-n2);
+  let score=100-(diff%40)*2;
+  return Math.max(55,Math.min(92,score));
+}
+
+// 匹配文案
+function getText(score){
+  let arr=[];
+  if(score>85) arr=["你们是正缘","缘分极佳"];
+  else if(score>75) arr=["关系稳定","感情发展顺利"];
+  else if(score>65) arr=["缘分不错需要磨合","吸引力较强"];
+  else arr=["普通缘分需要努力","沟通很重要"];
+  return arr[Math.floor(Math.random()*arr.length)];
+}
+
+// 开始测算
+function startTest(){
+  nextPage(3);
+  let texts=["分析生日能量","计算缘分指数","推演未来关系"];
+  let i=0;
+  let t=setInterval(()=>{
+    document.getElementById("loadingText").innerText=texts[i]; 
+    i++;
+    if(i>=texts.length) clearInterval(t);
+  },600);
+
+  setTimeout(()=>{
+    const y=document.getElementById("yourBirthday").value;
+    const p=document.getElementById("partnerBirthday").value;
+    const score=calculateScore(y,p);
+    document.getElementById("score").innerText=score+"%";
+    document.getElementById("bar").style.width=score+"%";
+    document.getElementById("resultText").innerText=getText(score);
+
+    // 固定男女头像
+    document.getElementById("avatar1").src = document.getElementById("yourGender").value=="male"?"male.png":"female.png";
+    document.getElementById("avatar2").src = document.getElementById("partnerGender").value=="male"?"male.png":"female.png";
+
+    createRadar();
+    generateTimeline(score);
+    incrementCounter();
+    nextPage(4);
+  },2500);
+}
+
+// 雷达图
+function createRadar(){
+  new Chart(document.getElementById("radarChart"),{
+    type:"radar",
+    data:{
+      labels:["沟通","信任","情绪","稳定","缘分"],
+      datasets:[{
+        data:[Math.random()*40+60,Math.random()*40+60,Math.random()*40+60,Math.random()*40+60,Math.random()*40+60],
+        backgroundColor:"rgba(255,77,109,0.3)",
+        borderColor:"#ff4d6d"
+      }]
+    },
+    options:{animation:{duration:1200}}
+  });
+}
+
+// 时间线预测（去掉月份）
+function generateTimeline(score){
+  const events=[];
+  if(score>85){
+    events.push("你们的沟通非常顺畅，适合约会");
+    events.push("感情稳步发展，互相支持");
+    events.push("关系深厚，彼此信任");
+  } else if(score>75){
+    events.push("沟通偶尔出现小摩擦");
+    events.push("需要多一些包容与理解");
+    events.push("感情总体平稳，互相体贴");
+  } else if(score>65){
+    events.push("注意理解对方的需求");
+    events.push("磨合阶段需要耐心");
+    events.push("慢慢建立信任与默契");
+  } else {
+    events.push("沟通存在波动，需要注意情绪");
+    events.push("相处需更加用心和理解");
+    events.push("努力增进默契，感情才会稳定");
+  }
+  document.getElementById("timeline").innerHTML = events.map(e=>"• "+e).join("<br>");
+}
+
+// 社交滚动提示
+const first=["Alex","Emma","Liam","Sophia","Noah","Olivia"];
+const last=["Lee","Tan","Lim","Wong","Chen","Ng"];
+const region=["新加坡","香港","台湾","马来西亚","美国"];
+window.onload=function(){
+  setInterval(()=>{
+    const name=first[Math.floor(Math.random()*first.length)]+" "+last[Math.floor(Math.random()*last.length)];
+    const r=region[Math.floor(Math.random()*region.length)];
+    const s=Math.floor(Math.random()*30)+60;
+    document.getElementById("scrollNotice").innerText=`${r}用户 ${name} 刚刚测试了匹配度 ${s}%`;
+  },2000);
+};
+
+// 用户数量动态增长
+let counter=412893;
+function incrementCounter(){
+  counter+=Math.floor(Math.random()*3)+1;
+  document.getElementById("counter").innerText=`已有 ${counter} 对情侣完成测试`;
+}
+
+// 倒计时
+let time=1799;
+setInterval(()=>{
+  let m=Math.floor(time/60), s=time%60;
+  document.getElementById("timer").innerText=m+":"+String(s).padStart(2,"0");
+  if(time>0) time--;
+},1000);
+
+// 发送完整报告到 Make + 私域
+async function sendToMake(){
+  const yourName = document.getElementById("yourName").value.trim();
+  const yourBirthday = document.getElementById("yourBirthday").value.trim();
+  const yourGender = document.getElementById("yourGender").value;
+  const partnerName = document.getElementById("partnerName").value.trim();
+  const partnerBirthday = document.getElementById("partnerBirthday").value.trim();
+  const partnerGender = document.getElementById("partnerGender").value;
+
+  if(!yourName || !yourBirthday || !yourGender || !partnerGender){
+    alert("请完整填写双方姓名、生日和性别！");
+    return;
+  }
+
+  const reportContent = {
+    name: yourName,
+    birthday: yourBirthday,
+    gender: yourGender,
+    partner: partnerName,
+    partnerBirthday: partnerBirthday,
+    partnerGender: partnerGender,
+    score: document.getElementById("score").innerText,
+    text: document.getElementById("resultText").innerText,
+    timeline: document.getElementById("timeline").innerHTML,
+    avatar1: document.getElementById("avatar1").src,
+    avatar2: document.getElementById("avatar2").src
+  };
+
+  console.log("发送数据:", reportContent);
+
+  try{
+    await fetch("https://hook.eu1.make.com/rtj2y5b392qk89kpd218ldlplsermn7o",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(reportContent)
+    });
+    await fetch("https://hook.eu1.make.com/sgl24vzd5ltzgjirs5fat3m6ie1lbho1",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body: JSON.stringify(reportContent)
+    });
+  }catch(err){
+    console.warn("数据发送失败，但仍跳转私域", err);
+  }
+
+  // 跳转私域
+  window.location.href="https://wa.me/85252150906?text=";
+}
+</script>
+</body>
+</html>
